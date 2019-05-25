@@ -1,0 +1,107 @@
+PART 1
+
+Added a new shell command (i.e., a user space program) named "myecho" to xv6. After this
+command is added, if doing an ls in the root directory, you will see something like:
+
+$ ls
+. 1 1 512
+.. 1 1 512
+README 2 2 1973
+cat 2 3 13636
+echo 2 4 12601
+forktest 2 5 8205
+grep 2 6 15548
+init 2 7 13502
+kill 2 8 12721
+ln 2 9 12627
+ls 2 10 15483
+mkdir 2 11 12750
+rm 2 12 12739
+sh 2 13 25383
+stressfs 2 14 13721
+usertests 2 15 67232
+wc 2 16 14242
+zombie 2 17 12355
+myecho 2 18 12742
+console 3 19 0
+
+The second to the last line is the new program. The new command works like echo. But it
+prints a fix string ("Print in user space: ") before the user-supplied string. For example, here
+should be the outputs if we run the program three times with different strings supplied:
+
+$ myecho Hello World
+Print in user space: Hello World
+
+$ myecho CS 550 Operating Systems
+Print in user space: CS 550 Operating Systems
+
+$ myecho
+Print in user space:
+
+-----------------------------------------------------------------------------------------------------
+PART 2
+
+Similar task. But this time printing a message in the kernel space.
+Added a message "*** Print in kernel space." just before "cpu0: starting" is printed.
+The desired output is:
+
+xv6...
+*** print in kernel space.
+cpu0: starting 0
+sb: size 1000 nblocks 941 ninodes 200 nlog 30 logstart 2 inodestart 32 bmap start 58
+init: starting sh
+$
+
+-----------------------------------------------------------------------------------------------------
+
+PART 3
+
+The original xv6 system doesn't have a "shutdown" command to properly turn off the machine.
+In this part,  I have added two "shutdown" commands, which essentially do the same thing
+- to shut down the machine.
+
+	1.
+	shutdown command and the system call
+
+	The first command is named "shutdown", which simply shuts down the machine. In the baseline code,
+	the file "shutdown.c" provides the implementation of this command.
+
+	2.
+	shutdown2 command and the system call
+
+	The command is named "shutdown2", which prints a shutdown message provided by the user within the
+	system call implementation before shutting down the machine. In the baseline code, the file
+	"shutdown2.c" provides the implementation of this command.
+
+-----------------------------------------------------------------------------------------------------
+
+PART 4
+
+Usage of POSIX process API's
+
+1.
+pipe - executing commands
+
+Implemented the effect of a three-command pipeline, "cmd-1 | cmd-2 | cmd-3", where "cmd-i" is the i-th
+line in the file "cmds".
+The current content in file "cmds" is:
+cat Makefile
+head -4
+wc -l
+Therefore, running your program would give us the same result as running 
+cat Makefile | head -4 | wc -l'.
+Program also prints when each child process executes its command and when the parent process
+reaps each of the child processes.	
+
+2.
+pipe - synchronizing process
+
+Implemented a program which forks three child processes (C1, C2, and C3), and uses pipe to control the
+execution order of the child processes based on the user input. Specifcally,
+
+ - If "1" is the input by the users, then the execution order should be: C3 -> C2 -> C1.
+ - If "2" is the input by the users, then the execution order should be: C2 -> C1 -> C3.
+ - If "3" is the input by the users, then the execution order should be: C3 -> C1 -> C2.
+The program also prints when each child process executes and when the parent process
+reaps each of the child processes.
+
