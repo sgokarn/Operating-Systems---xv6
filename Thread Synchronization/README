@@ -1,0 +1,30 @@
+PART 1
+
+on-demand 2-thread synchronization
+
+"cv-sync-1", creates two new threads (t1 and t2) at runtime, and achieves an execution order for the two new threads
+according to user input. Specifically, this program takes three inputs from user:
+	- total runs: a positive integer that specifies the total number of runs of t1 and t2 before
+	  the program ends.
+ 	- t1 runs: a non-negative integer that specifies the number of consecutive runs for t1 before
+	  switching to t2.
+	- t2 runs: a non-negative integer that specifies the number of consecutive runs for t2 before
+	  switching back to t1.
+	
+	t1 runs and t2 runs cannot be zero at the same time. 
+	When a child thread runs, it just prints the global index of the run (starting from 1), its
+  	name, and its thread ID.
+ 	When the total number runs of t1 and t2 reaches total run , t1 and t2 terminate. Then
+ 	the main thread reports the numbers of runs by t1 and t2 respectively, and exits.
+
+PART 2
+
+on demand 3-thread synchronization
+
+"cv-sync-2", which is very similar to the part 1.
+The difference is that this program performs synchronization among three
+runtime-created threads instead of two.
+
+
+There is no busy waiting/checking used. The synchronization among the threads has been done using 
+conditional variables.
