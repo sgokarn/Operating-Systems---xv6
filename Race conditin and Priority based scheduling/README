@@ -1,0 +1,128 @@
+PART 1
+
+Implemented race condition after a fork()
+
+After a fork(), either the parent process or the child process can be
+scheduled to run first. Some OSes schedule the parent to run first most often, while others allow
+the child to run first mostly. The xv6 OS by default schedules the parents to run first after
+fork()s mostly. In this part, I changed this race condition to allow the child process to run 
+first mostly after a fork().
+
+The baseline code has included a test driver program fork_rc_test that allows you to check
+the race condition after a fork(). The program is implemented in fork_rc_test.c. In the
+program, the parent process repeatedly calls fork(). After fork(), the parent process prints
+a string "parent" and when it gets the child process it prints a string "child" and exits.
+The program takes one argument to indicate whether parent-first or child-first policy is adopted.
+
+Here is the usage of the program
+$ fork_rc_test
+Usage: proj1_forktest 0|1
+0: Parent is scheduled to run most often
+1: Child is scheduled to run most often
+
+When calling the program using "fork rc test 0", the parent-policy (the default) is used, and
+you will see output like:
+
+$ fork_rc_test 0
+Setting parent as the fork winner ...
+Trial 0: parent! child!
+Trial 1: parent! child!
+Trial 2: parent! child!
+Trial 3: paren child! t!
+Trial 4: parent! child!
+Trial 5: child! parent!
+...
+Trial 45: parent! child!
+Trial 46: parent! child!
+Trial 47: parent! child!
+Trial 48: child! parent!
+Trial 49: parent! child!
+
+When calling the program using "fork rc test 1", the child-first (the one you're gonna imple-
+ment) is used. The output of the test driver program look like:
+
+$ fork_rc_test 1
+Setting child as the fork winner ...
+Trial 0: child! parent!
+Trial 1: child! parent!
+Trial 2: child! parent!
+Trial 3: child! parent!
+Trial 4: parent! child!
+Trial 5: child! parent!
+...
+Trial 45: child! parent!
+Trial 46: parent! child!
+Trial 47: child! parent!
+Trial 48: child! parent!
+Trial 49: child! parent!
+
+-----------------------------------------------------------------------------------------------------
+
+PART 2
+
+Implemented a priority based CPU scheduling
+
+The default scheduler of xv6 adopts a round-robin (RR) policy. In this part, I have
+implemented a simple priority-based policy.
+
+The policy has 3 priorities (-1, 0, and 1), with 1 being the highest, -1 being the lowest, and 0
+being the default. The rules are simple:
+ - The process with the highest priority always gets the CPU.
+ - If there are multiple processes with the same priority, RR is used.
+ - Every process created has a default priority of 0.
+
+To implement this, a scheduling tracing functionality has been added to the base
+code. When this tracing functionality is enabled, the kernel prints the PID of the currently running
+process every time before the CPU is transferred back to the scheduler in the timer interrupt
+handler. With this scheduling tracing functionality, you can see the sequence of processes that the
+scheduler schedules.
+A system call (sys enable sched trace()) and its corresponding user space wrapper
+function (void enable sched trace(int)) have been added in the base code to enable/disable the
+scheduling tracing functionality. A call of "enable sched trace(1)" will enable the
+tracing, and a call of "enable sched trace(0)" will disable it.
+The baseline code has a simple test driver program schdtest to illustrate how to use the
+above scheduling tracing functionality. The program is implemented in schdtest.c.
+In the program, the parent process first enables the scheduling tracing, and forks a child process. Then
+both the parent and the child perform some busy computation, and child's computation roughly
+take three times of parent's. 
+
+(1) Implemented the functionality that allows user program to set the type of scheduling policy.
+
+- Implemented a system call that can control whether the default policy (RR) is used or the
+  priority-based policy is used.
+- Implemented the corresponding system call in user space wrapper function, and declared it in
+  "user.h". The wrapper function's prototype is:
+  
+   void set_sched(int);
+This user-level wrapper function takes one integer argument: If the argument is 0, the
+default policy is adopted. If the argument is 1, the priority-based policy is used.
+
+(2) Implemented the functionality that allows user program to set the priority of a process.
+- Implemented a system call to set the priority of a given process.
+- Implemented the corresponding system call in user space wrapper function, and declared it in
+  "user.h". The wrapper function's prototype is:
+  
+   void set_priority(int pid, int priority);
+This user-level wrapper function takes two arguments. The first argument is the pid of
+the process whose priority is being set. The second argument is the new priority.
+
+(3) Implemented the priority-based scheduling policy. 
+    You can design your test code to test the implementation. 
+    Test cases handled:
+
+    - The scheduling policy to priority-based, fork processes and set priority for the processes
+	  such that each priority has one process, and check the process scheduling output. The correct
+      output should be that the processes are scheduled sequentially according to their priorities.
+
+    - The scheduling policy to priority-based, fork processes and set priority for the processes
+	  such that each priority has multiple processes, and check the process scheduling output. The
+	  correct output should be that the processes with different priorities are scheduled sequentially
+	  according to their priorities, and processes with the same priority are scheduled in a round-
+	  robin manner.
+
+	- The scheduling policy to priority-based, fork processes and set priority for the processes
+	  such that each priority has multiple processes. After the processes with the top two priorities
+	  finish executing, a new process with the highest priority (i.e., priority 1) is created. The
+	  correct output should be that, in addition to the correct output similar to the previous test
+  	  case, the new process should be scheduled to run before the remaining processes, which have
+	  the lowest priority.
