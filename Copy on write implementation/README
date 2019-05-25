@@ -1,0 +1,55 @@
+The fork syscall creates an exact copy of the parent process. xv6 implements it 
+using the "direct copying" approach, which simply makes a copy of the parents memory
+and other resources. However, as we know, this way is not effcient. In this project, 
+I have added the CoW functionality to the xv6 OS.
+
+Testing:
+
+The test program source code (cowtest.c) is in the base code. The four test cases
+handled are explained as follows:
+
+1. The parent process creates one child processes. Before fork(), the parent checks the
+number of free memory frames1 (short as "NFMF" in the following) (suppose it is v1).
+After fork(), the parent just checks NFMF (suppose it is v2).
+The child first sleeps for some time (to let the parent finish its job), then checks the NFMF
+(suppose it is v3).
+After the parent calls wait() for its child process, it checks the NFMF (suppose it is v4).
+A correct CoW implementation should have the following:
+(a) v1 == v4, otherwise memory frames leak happened with CoW implementation.
+(b) v2 == v3, and the value of (v1􀀀v2) when with CoW (i.e., CoW implementation) should
+be smaller than that when without CoW (i.e., the base code).
+
+2. The parent process creates one child processes. Before fork(), the parent checks the NFMF
+(v1).
+After fork(), the parent just checks the NFMF (v2).
+The child first sleeps for some time (to let the parent finish its job),, then checks the NFMF
+(v3), reads a global variable, and checks the NFMF (v4) again.
+After the parent calls wait() for its child process, it checks the NFMF (v5).
+A correct CoW implementation should have the following:
+(a) v1 == v5, otherwise memory frames leak happened with CoW implementation.
+(b) v2 == v3 == v4, and the value of (v1 - v2) when with CoW should be smaller than
+that when without CoW.
+
+3. The parent process creates one child processes. Before fork(), the parents checks the
+NFMF (v1).
+After fork(), the parents checks the NFMF (v2), reads a global variable, checks the NFMF
+(v3) again.
+The child first sleeps for some time (to let the parent finish its job), then checks the NFMF
+(v4), modifies the global variable, and checks the NFMF (v5) again;
+After the parent calls wait() for its child process, it checks the NFMF (v6).
+A correct CoW implementation should have the following:
+(a) v1 == v6, otherwise memory frames leak happened with CoW implementation.
+(b) v2 == v3 == v4, and (v4 - v5) == 1.
+
+4. The parent process creates one child processes, and there is a global array A that spans two
+pages (page size is 4096 byte). Before fork(), the parents checks the NFMF (v1).
+After fork(), the parents checks the NFMF (v2), modifies an array element of A that
+locates in the first page, checks the NFMF (v3) again;
+The child first sleeps for some time (to let parent finish its job), then checks the NFMF (v4),
+modifies an array element of A that also locates in the first page, and checks the NFMF
+(v5). Then the child modifies an array element of A that locates in the second page, and
+checks the NFMF (v6) again;
+After the parent calls wait() for its child process, it checks the NFMF (v7).
+A correct CoW implementation should have the following:
+(a) v1 == v7, otherwise memory frames leak happened with CoW implementation.
+(b) (v2 - v3) == 1, v3 == v4 == v5, and (v5 - v6) == 1.
